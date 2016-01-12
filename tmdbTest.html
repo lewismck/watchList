@@ -1,0 +1,171 @@
+<!DOCTYPE HTML>
+<head>
+    <script src="themoviedb.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/styles.css">
+    <title>tmdb watchlist</title>
+</head>
+<body onload="checkStorage()">
+<h1>FILM WATCHLIST TEST</h1>
+<p>All data from <a href="https://www.themoviedb.org/?language=en" target="_blank">tmdb.</a></p>
+<div class="col-md-8">
+
+        <p>Search Films:
+        <input id="movieNameInput" type="text" value="Knight of Cups" />
+        <button class="btn" id="searchButton" value="test">Search</button>
+      </p>
+        <br />
+      <br>
+    <p id="results"></p>
+</div>
+<div class="col-md-4">
+  <h2>Watchlist</h2>
+<p id="list"></p>
+</div>
+    <script type="text/javascript">
+
+        // jquery for the search button - calls the tmdb.js file
+        $('#searchButton').click(function () {
+            'use strict';
+            var searchTerm = $('#movieNameInput').val(),
+                options = { "query": searchTerm };
+                theMovieDb.search.getMovie(options, successCallback, errorCallback);
+        });
+
+        // method to show results if there are any
+        function successCallback(data) {
+            'use strict';
+            $('#results').text('');
+            data = JSON.parse(data);
+            //console.log(data);
+            //console.log(data.results[0].id);
+
+            if(!data.results || data.results.length == 0){
+              $('#results').text('Nothing found.');
+            }
+
+            //added to window for broader scope for use by addToList() method
+            window.searchResults = [];
+            window.searchIDs = [];
+
+            for (var i = 0; i < data.results.length; i++){
+                  var imageUrl = localStorage.getItem('tmdbImageUrlBase') + data.results[i].poster_path;
+                  searchResults.push(data.results[i].title);
+                  var anID = data.results[i].id;
+                  searchIDs.push(anID);
+
+                  $('#results').append('Title: <b>' + data.results[i].title + '</b><br>');
+                  $('#results').append('Release Date: <b>' + data.results[i].release_date +'<b><br>');
+                  $('#results').append('<img src="' + imageUrl + '" /><br>');
+                  $('#results').append('<button class="btn" id="watch" onclick="addToList('+i+')">Add to list</button><br>');
+            }
+        }
+
+
+    //Add the film at the specified index in searchResults to the watchList
+    function addToList(index){
+      var filmTitle = searchResults[index];
+      var filmID = searchIDs[index];
+      var filmName = '"'+filmTitle+'"';
+      //clear empty list text
+      if(localStorage.getItem('watchList') == null){
+        $('#list').text('');
+        var newList = [searchResults[index]];
+        localStorage["watchList"] = JSON.stringify(newList);
+        $('#list').append(filmTitle + " <button class='btn btn-danger'onclick='removeFromList("+filmName+")'>-</button><br>");
+
+      }
+      //Add the new film to the list and update local storage
+        else{
+          list = JSON.parse(localStorage["watchList"]);
+          list.push(filmTitle);
+          localStorage["watchList"] = JSON.stringify(list);
+          $('#list').append(filmTitle + " <button class='btn btn-danger' onclick='removeFromList("+filmName+")'>-</button><br>");
+      }
+    }
+
+    //Remove an item from the watchList Array
+    function removeFromList(entry){
+      //get the watchList
+      list = JSON.parse(localStorage["watchList"]);
+      console.log(list);
+
+      //Iterate through it looking for the matching entry and removing it with splice(i, 1)
+      for(var i=0; i< list.length; i++)
+        if(list[i] == entry){
+          list.splice(i, 1);
+          localStorage["watchList"] = JSON.stringify(list);
+          console.log(list);
+          //update the displayed list
+          checkStorage();
+        }
+      //console.log(entry)
+    }
+
+
+    //---------Local storage for watchlist storing-----------//
+
+    //method to fill storage
+    function populateStorage(id, value){
+	     localStorage.setItem(id, value);
+    }
+
+    //check storage and show wathlist if available
+    function checkStorage(){
+      //if no storage set then say add films
+      if(localStorage.getItem('watchList') == null){
+        $('#list').text('Add films to me :)');
+      }
+
+      //if watchList is set then show each element with a delete button
+      if(localStorage.getItem('watchList') != null){
+          //remove 'Add films to me :)' text
+          $('#list').text('');
+          list = JSON.parse(localStorage["watchList"]);
+          for(i = 0; i < list.length; i++){
+            //For easier embedding into the html below - jquery parses nested quotes weirdly
+            var filmName = '"'+list[i]+'"';
+
+            $('#list').append(list[i] + " <button class='btn btn-danger' onclick='removeFromList("+filmName+")'>-</button><br>");
+          }
+        }
+    }
+
+
+    //---------tmdb js housekeeping-----------//
+
+    //  callback for successful getConfiguration call
+      function configSuccessCallback(data) {
+          'use strict';
+          // Set the base image url to the returned base_url value plus w185, shows posters with a width of 185 pixels.
+          // Store it in localStorage so we don't make the configuration call every time.
+          localStorage.setItem('tmdbImageUrlBase', JSON.parse(data).images.base_url + 'w185');
+          //$('#results').text('tmdbImageUrlBase downloaded from themoviedb.org: ' + localStorage.getItem('tmdbImageUrlBase'));
+      }
+
+
+      // callback for getConfiguration call error
+      function configErrorCallback(data) {
+          'use strict';
+          //$('#results').text('Error getting TMDb configuration! ' + JSON.parse(data).status_message);
+      }
+      // check localStorage for imageBaseUrl, download from TMDb if not found
+      if (localStorage.getItem('tmdbImageUrlBase')) {
+          //$('#results').text('tmdbImageUrlBase retrieved from localstorage: ' + localStorage.getItem('tmdbImageUrlBase'));
+      } else {
+          theMovieDb.configurations.getConfiguration(configSuccessCallback, configErrorCallback);
+      }
+
+      // callback for movie search error
+      function errorCallback(data) {
+          'use strict';
+          //console.log('error: \n' + data);
+          $('#results').text('Error searching. ' + JSON.parse(data).status_message);
+      }
+    </script>
+    <div class="footer">
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+/*-----Layout-----*/
+.col-md-4{
+  position: fixed;
+  top: 15px;
+  right: 1px;
+  border-left: 2px solid black;
+  }
+
+.col-md-8{
+  /*border: 2px solid #ccddff;*/
+  border-radius: 4px;
+  /*background-color: #ccddff;*/
+  padding-top: 5px;
+}
+/*-----Text-----*/
+p{
+  color: black;
+}
